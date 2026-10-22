@@ -65,6 +65,12 @@ const Sound = (() => {
       melody: [76, null, 74, 72, null, 69, null, null, 72, null, 71, 67, null, null, 69, null],
       wave: 'triangle',
     },
+    eerie: {
+      bpm: 52,
+      chords: [[45, 48, 51], [44, 47, 51], [45, 48, 52], [42, 46, 49]],
+      melody: [null, 75, null, null, 74, null, null, null, null, 70, null, 71, null, null, null, null],
+      wave: 'sine',
+    },
     home: {
       bpm: 84,
       chords: [[48, 52, 55], [53, 57, 60], [57, 60, 64], [55, 59, 62]],
@@ -96,7 +102,10 @@ const Sound = (() => {
     }
   }
 
+  let current = null;
   function music(name) {
+    if (name === current && timer) return;
+    current = name;
     if (timer) { clearInterval(timer); timer = null; }
     theme = THEMES[name] || null;
     if (!ac || !theme) return;
@@ -158,5 +167,30 @@ const Sound = (() => {
       for (let i = 0; i < 3; i++) tone(f, 0.03, { type: 'sine', vol: 0.012, delay: i * 0.05 });
     },
     click() { tone(1800, 0.02, { vol: 0.05 }); },
+    drip() {
+      const f = 1400 + Math.random() * 900;
+      tone(f, 0.08, { type: 'sine', vol: 0.05, slide: -f * 0.5 });
+    },
+    scratch() {
+      for (let i = 0; i < 5; i++) noise(0.06, { vol: 0.12, delay: i * 0.09 + Math.random() * 0.03, freq: 3500, type: 'bandpass' });
+    },
+    howl() {
+      tone(330, 1.6, { type: 'sine', vol: 0.06, slide: 220, attack: 0.4 });
+      tone(335, 1.6, { type: 'triangle', vol: 0.03, slide: 200, attack: 0.5, delay: 0.1 });
+    },
+    hum(dur = 3) {
+      tone(55, dur, { type: 'sawtooth', vol: 0.05, slide: 165, attack: dur * 0.6 });
+      tone(110, dur, { type: 'sine', vol: 0.08, slide: 440, attack: dur * 0.6 });
+    },
+    liftoff() {
+      tone(220, 2.2, { type: 'sine', vol: 0.09, slide: 1600, attack: 0.3 });
+      tone(330, 2.2, { type: 'triangle', vol: 0.05, slide: 2000, attack: 0.4, delay: 0.15 });
+      [880, 1175, 1320, 1760].forEach((f, i) => tone(f, 0.5, { type: 'sine', vol: 0.04, delay: 0.6 + i * 0.25 }));
+    },
+    owl() {
+      tone(380, 0.35, { type: 'sine', vol: 0.05, slide: -40 });
+      tone(360, 0.6, { type: 'sine', vol: 0.05, slide: -60, delay: 0.5 });
+    },
+    babble() { noise(0.6, { vol: 0.025, freq: 900, type: 'bandpass' }); },
   };
 })();

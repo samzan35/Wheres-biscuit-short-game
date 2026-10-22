@@ -8,6 +8,8 @@ const SPEAKERS = {
   'Mr. Kowalski': { pitch: 0.7 },
   'Mia': { pitch: 1.6 },
   'Mr. Abernathy': { pitch: 0.8 },
+  'Biscuit': { pitch: 0.55 },
+  '???': { pitch: 0.55 },
 };
 
 const UI = (() => {
@@ -50,7 +52,7 @@ const UI = (() => {
   }
 
   function parse(line) {
-    const m = line.match(/^([A-Z][A-Za-z. ]+?): (.*)$/);
+    const m = line.match(/^([A-Z?][A-Za-z.? ]*?): (.*)$/);
     if (m && SPEAKERS[m[1]]) return { speaker: m[1], text: m[2] };
     return { speaker: null, text: line };
   }
