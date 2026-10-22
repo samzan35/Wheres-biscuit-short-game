@@ -367,7 +367,9 @@ function buildWoods() {
   carve(g, 16, 7, 17, 10, 'L');
   carve(g, 13, 19, 19, 20, 'L');
   carve(g, 5, 1, 18, 8, 'L');
-  [[5, 1], [6, 1], [17, 1], [18, 1], [5, 2], [18, 2], [5, 8], [6, 8], [5, 7], [18, 8], [18, 7], [7, 8]].forEach(([x, y]) => { g[y][x] = 'Y'; });
+  [[5, 1], [6, 1], [17, 1], [18, 1], [5, 2], [18, 2], [5, 7], [18, 8], [18, 7]].forEach(([x, y]) => { g[y][x] = 'Y'; });
+  // a tree line along the bottom of the clearing: the only way in is the gap on the right
+  carve(g, 5, 8, 15, 8, 'Y');
   return g;
 }
 

@@ -574,7 +574,7 @@ const Story = (() => {
     if (y <= 12 && x <= 6 && !f.w1) {
       f.w1 = true;
       await say(['Through the trees ahead, a soft green glow pulses.', 'In. Out. In. Out.', 'Like breathing.']);
-    } else if (y <= 8 && !f.metBiscuit) {
+    } else if (y <= 7 && !f.metBiscuit) {
       await clearingScene();
     }
   }
@@ -596,11 +596,25 @@ const Story = (() => {
     const f = F();
     if (f.metBiscuit) return;
     f.metBiscuit = true;
+    try {
+      await clearingSceneBody();
+    } catch (err) {
+      // never leave the story stuck: let the scene be triggered again
+      f.metBiscuit = false;
+      Game.camOverride = null;
+      throw err;
+    }
+  }
+
+  async function clearingSceneBody() {
+    const f = F();
     const p = Game.player;
     const dog = entity('biscuit');
     const circle = Game.entities.filter((e) => e.circle);
     Game.camOverride = -20; // frame the whole circle above the dialogue box
-    await walk(p, 'L'.repeat(p.x - 11), 3.5);
+    // walk to the spot just below the circle, from wherever we came in
+    const dx = 11 - p.x, dy = 7 - p.y;
+    await walk(p, (dy < 0 ? 'U' : 'D').repeat(Math.abs(dy)) + (dx > 0 ? 'R' : 'L').repeat(Math.abs(dx)), 3.5);
     face(p, 'up');
     await wait(0.5);
     await say(['A clearing. Glowing, soft and green.', 'And in the middle of it, sitting perfectly still...']);
@@ -641,7 +655,7 @@ const Story = (() => {
       'You: ...And what did you learn?',
     ]);
     await wait(0.5);
-    await walk(dog, 'DDD', 2.5);
+    await walk(dog, 'DD', 2.5);
     await say([
       'Biscuit: You walked me in the rain when you were tired.',
       'Biscuit: You shared your sandwich when Claire was not looking.',
@@ -685,7 +699,7 @@ const Story = (() => {
     face(rufus, 'down');
     await emote(rufus, '...', 1.0);
     await say('He looks at you for a long moment. Then he turns toward the houses, like he knows exactly where he\'s going.');
-    await walk(rufus, 'DRRRRRRDD', 3);
+    await walk(rufus, 'RRRRRRDD', 3);
     Game.entities = Game.entities.filter((e) => e !== rufus);
     await wait(0.8);
     await say('One by one, the crickets start singing again.');
