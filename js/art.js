@@ -116,6 +116,44 @@ const GROUND = {
       rect(c, x + i * 8, y + j * 8, 8, 8, (i + j) % 2 ? '#b9c6c8' : '#e9e5d8');
     }
   },
+  tunnelwall(c, x, y, r, info) {
+    rect(c, x, y, TS, TS, '#24282c');
+    rect(c, x, y + (info.ty % 2 ? 7 : 15), TS, 1, '#1a1d20');
+    for (let i = 0; i < 6; i++) rect(c, x + Math.floor(r() * 16), y + Math.floor(r() * 16), 1, 1, r() < 0.6 ? '#2e3338' : '#2f4a2c');
+    // lip where the wall meets the floor below it
+    if (info.nb(0, 1) === 'e' || info.nb(0, 1) === 'i') { rect(c, x, y + 12, TS, 4, '#3a4046'); rect(c, x, y + 12, TS, 1, '#4a5056'); }
+  },
+  tunnelfloor(c, x, y, r) {
+    rect(c, x, y, TS, TS, '#4a4f52');
+    for (let i = 0; i < 8; i++) rect(c, x + Math.floor(r() * 16), y + Math.floor(r() * 16), 2, 1, r() < 0.5 ? '#42474a' : '#565b5e');
+    if (r() < 0.25) ellipse(c, x + 4 + Math.floor(r() * 8), y + 4 + Math.floor(r() * 8), 3, 1, '#3c5258');
+  },
+  tunnelwater(c, x, y, r) {
+    rect(c, x, y, TS, TS, '#2c4048');
+    for (let i = 0; i < 3; i++) rect(c, x + Math.floor(r() * 12), y + 2 + Math.floor(r() * 12), 4, 1, '#3e5c66');
+  },
+  sand(c, x, y, r) {
+    rect(c, x, y, TS, TS, '#a89a7a');
+    for (let i = 0; i < 10; i++) rect(c, x + Math.floor(r() * 16), y + Math.floor(r() * 16), 1, 1, r() < 0.5 ? '#98896a' : '#b8ab8c');
+  },
+  pebbles(c, x, y, r) {
+    GROUND.sand(c, x, y, r);
+    for (let i = 0; i < 5; i++) {
+      const px = x + 1 + Math.floor(r() * 12), py = y + 1 + Math.floor(r() * 12);
+      ellipse(c, px + 1, py + 1, 2, 1, r() < 0.5 ? '#7a7a74' : '#8e8a80');
+    }
+  },
+  riverwater(c, x, y, r, info) {
+    rect(c, x, y, TS, TS, '#1e3a58');
+    for (let i = 0; i < 3; i++) rect(c, x + Math.floor(r() * 10), y + 2 + Math.floor(r() * 12), 5, 1, '#2e5478');
+    if (info.nb(0, -1) !== 'W') { rect(c, x, y, TS, 2, '#c8d4dc'); rect(c, x, y + 2, TS, 1, '#4a7090'); }
+    if (info.nb(0, 1) !== 'W') rect(c, x, y + 14, TS, 2, '#16304a');
+  },
+  leaves(c, x, y, r) {
+    rect(c, x, y, TS, TS, '#3e3222');
+    const cols = ['#5a4028', '#6a4a24', '#4a3a26', '#7a5a2a', '#3a4a26'];
+    for (let i = 0; i < 9; i++) rect(c, x + Math.floor(r() * 15), y + Math.floor(r() * 15), 2, 1, cols[Math.floor(r() * cols.length)]);
+  },
   rug(c, x, y, r, info) {
     rect(c, x, y, TS, TS, '#8a3a3a');
     const isRug = (ch) => ch === 'u' || ch === 'o';
@@ -160,6 +198,23 @@ const OVER = {
     disc(c, x + 8, y + 8, 6, '#2f6a34');
     disc(c, x + 6, y + 6, 3, '#3c8040');
     if (r() < 0.5) { rect(c, x + 10, y + 9, 2, 2, '#e05a5a'); rect(c, x + 5, y + 11, 2, 2, '#e05a5a'); }
+  },
+  pine(c, x, y, r) {
+    ellipse(c, x + 8, y + 15, 6, 1, 'rgba(0,0,0,0.35)');
+    rect(c, x + 7, y + 12, 2, 4, '#3a2618');
+    const dark = r() < 0.5 ? '#173a24' : '#1a3e22';
+    for (let i = 0; i < 3; i++) {
+      const ty = y - 3 + i * 5, half = 3 + i * 2;
+      for (let k = 0; k < 6; k++) rect(c, x + 8 - Math.floor(half * k / 5), ty + k, Math.max(1, Math.floor(half * k / 5) * 2), 1, k < 2 ? '#2a5a36' : dark);
+    }
+    rect(c, x + 6, y + 1, 1, 1, '#3a7046');
+  },
+  grate(c, x, y) {
+    rect(c, x + 2, y + 2, 12, 12, '#0a0b0c');
+    for (let i = 0; i < 4; i++) rect(c, x + 3 + i * 3, y + 2, 1, 12, '#6a5040');
+    rect(c, x + 2, y + 2, 12, 1, '#7a5a44');
+    rect(c, x + 2, y + 8, 12, 1, '#7a5a44');
+    rect(c, x + 2, y + 13, 12, 1, '#5a4030');
   },
   curbBottom(c, x, y) {
     rect(c, x, y + 13, TS, 2, '#8a867b');
@@ -608,7 +663,65 @@ const PROPS = {
     rect(c, X, Y + 10, 1, 1, '#d03030');
     rect(c, X + 9, Y + 11, 4, 2, '#f4f4f4');
   },
-  kitchenhint() {},
+  log(c, X, Y) {
+    ellipse(c, X + 16, Y + 14, 16, 2, 'rgba(0,0,0,0.4)');
+    rect(c, X - 2, Y + 3, 36, 10, '#4a3420');
+    rect(c, X - 2, Y + 4, 36, 3, '#6a4a2c');
+    for (let i = 0; i < 6; i++) rect(c, X + i * 6, Y + 8, 4, 1, '#3a2818');
+    ellipse(c, X - 2, Y + 8, 3, 5, '#8a6a44');
+    ellipse(c, X - 2, Y + 8, 1, 2, '#6a4a2c');
+    rect(c, X + 20, Y, 2, 4, '#4a3420');
+    rect(c, X + 22, Y - 2, 3, 2, '#2a5a30');
+    rect(c, X + 6, Y + 3, 4, 2, '#3a6a34');
+  },
+  logv(c, X, Y) {
+    ellipse(c, X + 8, Y + 30, 6, 2, 'rgba(0,0,0,0.4)');
+    rect(c, X + 3, Y - 2, 10, 34, '#4a3420');
+    rect(c, X + 4, Y - 2, 3, 34, '#6a4a2c');
+    for (let i = 0; i < 6; i++) rect(c, X + 9, Y + i * 6, 1, 4, '#3a2818');
+    ellipse(c, X + 8, Y - 2, 5, 2, '#8a6a44');
+    rect(c, X + 12, Y + 12, 3, 2, '#2a5a30');
+  },
+  pipemouth(c, X, Y) {
+    rect(c, X, Y - 4, 32, 52, '#5e6266');
+    for (let i = 0; i < 6; i++) rect(c, X, Y - 4 + i * 9, 32, 1, '#4e5256');
+    ellipse(c, X + 20, Y + 20, 12, 13, '#7a7e82');
+    ellipse(c, X + 20, Y + 20, 10, 11, '#0c0d0f');
+    rect(c, X + 18, Y + 31, 16, 4, '#2c4048');
+  },
+  scorch(c, X, Y) {
+    ellipse(c, X + 24, Y + 16, 22, 13, '#4a4436');
+    ellipse(c, X + 24, Y + 16, 19, 11, '#6e7a7c');
+    ellipse(c, X + 24, Y + 16, 16, 9, '#8aa4a8');
+    ellipse(c, X + 24, Y + 16, 12, 6, '#a8c8c8');
+    rect(c, X + 18, Y + 12, 6, 1, '#d8f0f0');
+    rect(c, X + 28, Y + 18, 4, 1, '#d8f0f0');
+  },
+  tennisball(c, X, Y) {
+    ellipse(c, X + 8, Y + 12, 3, 1, 'rgba(0,0,0,0.3)');
+    disc(c, X + 8, Y + 9, 3, '#c8e040');
+    rect(c, X + 6, Y + 8, 4, 1, '#f4f4e0');
+  },
+  oldcollar(c, X, Y) {
+    ellipse(c, X + 8, Y + 10, 5, 3, '#3a5a8a');
+    ellipse(c, X + 8, Y + 10, 3, 1, '#4a4f52');
+    rect(c, X + 7, Y + 12, 3, 3, '#a89a60');
+  },
+  scratches(c, X, Y) {
+    // a spiral gouged into the concrete
+    const pts = [[8, 7], [9, 7], [9, 8], [8, 9], [7, 9], [6, 8], [6, 7], [6, 6], [7, 5], [8, 5], [9, 5], [10, 6], [11, 7], [11, 8], [11, 9], [10, 10], [9, 11], [8, 11], [7, 11], [6, 11], [5, 10], [4, 9], [4, 8], [4, 7], [4, 6], [4, 5], [5, 4], [6, 3]];
+    pts.forEach(([px, py]) => rect(c, X + px, Y + py, 1, 1, '#7a8a86'));
+  },
+  mushrooms(c, X, Y, o, t) {
+    const pulse = 0.5 + Math.sin(t * 2) * 0.5;
+    const col = pulse > 0.5 ? '#9ae0ff' : '#6ab8e0';
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const mx = X + 16 + Math.round(Math.cos(a) * 11), my = Y + 16 + Math.round(Math.sin(a) * 8);
+      rect(c, mx, my, 1, 2, '#d8d0c0');
+      rect(c, mx - 1, my - 1, 3, 1, col);
+    }
+  },
 };
 
 const EMOTE_GLYPHS = {

@@ -23,6 +23,16 @@ const TILES = {
   Z: { base: 'backwall', over: 'backdoor', solid: true },
   q: { base: 'patio' },
   G: { base: 'dirt', over: 'garden', solid: true },
+  // the pipe, the riverbed and the woods
+  O: { base: 'tunnelwall', solid: true },
+  A: { base: 'tunnelwall', over: 'grate', solid: true },
+  e: { base: 'tunnelfloor' },
+  i: { base: 'tunnelwater' },
+  a: { base: 'sand' },
+  z: { base: 'pebbles' },
+  W: { base: 'riverwater', solid: true },
+  L: { base: 'leaves' },
+  Y: { base: 'leaves', over: 'pine', solid: true },
   // indoors
   '#': { base: 'walltop', solid: true },
   w: { base: 'wallface', solid: true },
@@ -197,6 +207,10 @@ const MAP_STREET = {
     { id: 'pawprints', key: 'paw4', x: 12, y: 7, art: 'pawprints', ground: true, when: (f) => f.holeFound },
     { id: 'pawprints', key: 'paw5', x: 19, y: 7, art: 'pawprints', ground: true, when: (f) => f.holeFound },
     { id: 'pawprints', key: 'paw6', x: 27, y: 6, art: 'pawprints', ground: true, when: (f) => f.holeFound },
+    // ...and in the park, straight into the pipe
+    { id: 'pawprints', key: 'paw7', x: 46, y: 6, art: 'pawprints', vertical: true, ground: true, when: (f) => f.parkClue },
+    { id: 'pawprints', key: 'paw8', x: 49, y: 3, art: 'pawprints', ground: true, when: (f) => f.parkClue },
+    { id: 'pawprints', key: 'paw9', x: 52, y: 2, art: 'pawprints', vertical: true, ground: true, when: (f) => f.parkClue },
   ],
 };
 
@@ -238,4 +252,145 @@ const MAP_BACKYARD = {
   ],
 };
 
-const MAPS = { house: MAP_HOUSE, street: MAP_STREET, backyard: MAP_BACKYARD };
+// ---------------------------------------------------------------------------
+// THE PIPE (a winding drainage tunnel under the park)
+// ---------------------------------------------------------------------------
+function carve(g, x1, y1, x2, y2, ch) {
+  for (let y = y1; y <= y2; y++) for (let x = x1; x <= x2; x++) g[y][x] = ch;
+}
+
+function buildPipe() {
+  const g = makeGrid(40, 9, 'O');
+  carve(g, 1, 3, 14, 5, 'e');
+  carve(g, 12, 3, 14, 7, 'e');
+  carve(g, 12, 5, 26, 7, 'e');
+  carve(g, 24, 1, 26, 7, 'e');
+  carve(g, 24, 1, 38, 3, 'e');
+  // a trickle of water down the middle
+  carve(g, 1, 4, 13, 4, 'i');
+  carve(g, 13, 4, 13, 6, 'i');
+  carve(g, 13, 6, 25, 6, 'i');
+  carve(g, 25, 2, 25, 6, 'i');
+  carve(g, 25, 2, 38, 2, 'i');
+  g[2][7] = 'A';
+  g[4][32] = 'A';
+  g[4][19] = 'A';
+  g[4][0] = 'e';
+  g[2][39] = 'e';
+  return g;
+}
+
+const MAP_PIPE = {
+  id: 'pipe',
+  name: 'The Pipe',
+  grid: buildPipe(),
+  outdoor: true,
+  darkness: 0.9,
+  buildings: [],
+  lights: [
+    { x: 0, y: 4 * TS + 8, r: 30, i: 0.5 },
+    { x: 40 * TS, y: 2 * TS + 8, r: 40, i: 0.6 },
+  ],
+  doors: [
+    { x: 0, y: 4, id: 'pipe_west' },
+    { x: 39, y: 2, id: 'pipe_east' },
+  ],
+  objects: [
+    { id: 'oldcollar', x: 20, y: 7, art: 'oldcollar', ground: true },
+    { id: 'scratches', x: 16, y: 4, art: 'scratches', ground: true },
+    { id: 'scratches', key: 'scratches2', x: 29, y: 0, art: 'scratches', ground: true },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// THE RIVERBED (behind the neighborhood, where the pipe comes out)
+// ---------------------------------------------------------------------------
+function buildRiver() {
+  const W = 44, H = 14;
+  const g = makeGrid(W, H, 'g');
+  carve(g, 0, 0, W - 1, 1, 'Y');
+  carve(g, 0, 11, W - 1, 13, 'Y');
+  carve(g, 0, 4, W - 1, 5, 'a');
+  carve(g, 0, 6, W - 1, 7, 'W');
+  carve(g, 0, 8, W - 1, 8, 'a');
+  carve(g, 42, 0, 43, 13, 'Y');
+  carve(g, 0, 2, 1, 5, 'O');
+  carve(g, 38, 0, 39, 3, 'L');
+  [[3, 4], [9, 5], [14, 4], [22, 5], [27, 4], [31, 5], [36, 4], [40, 5], [6, 8], [19, 8], [33, 8]].forEach(([x, y]) => { g[y][x] = 'z'; });
+  [[5, 2], [12, 2], [17, 2], [25, 2], [30, 2], [35, 2], [41, 2], [8, 10], [20, 10], [29, 10]].forEach(([x, y]) => { g[y][x] = 'Y'; });
+  [[9, 2], [21, 3], [33, 2], [14, 9], [36, 10]].forEach(([x, y]) => { g[y][x] = 'b'; });
+  [[7, 3], [15, 3], [28, 3], [24, 9]].forEach(([x, y]) => { g[y][x] = 'f'; });
+  return g;
+}
+
+const MAP_RIVER = {
+  id: 'river',
+  name: 'The Riverbed',
+  grid: buildRiver(),
+  outdoor: true,
+  darkness: 0.6,
+  buildings: [],
+  lights: [
+    // moonlight glinting off the water
+    { x: 8 * TS, y: 7 * TS, r: 40, i: 0.35 },
+    { x: 20 * TS, y: 6 * TS + 8, r: 46, i: 0.4 },
+    { x: 34 * TS, y: 7 * TS, r: 40, i: 0.35 },
+  ],
+  doors: [
+    { x: 1, y: 4, id: 'river_pipe' },
+    { x: 1, y: 3, id: 'river_pipe' },
+    { x: 1, y: 5, id: 'river_pipe' },
+    { x: 38, y: 0, id: 'river_woods' },
+    { x: 39, y: 0, id: 'river_woods' },
+  ],
+  objects: [
+    { id: 'pipemouth', x: 0, y: 2, w: 2, h: 3, art: 'pipemouth', solid: true },
+    { id: 'scorch', x: 14, y: 4, w: 3, h: 2, art: 'scorch', ground: true },
+    { id: 'tennisball', x: 26, y: 5, art: 'tennisball', solid: true },
+    { id: 'pawprints', key: 'rp1', x: 5, y: 4, art: 'pawprints', ground: true },
+    { id: 'pawprints', key: 'rp2', x: 11, y: 5, art: 'pawprints', ground: true },
+    { id: 'pawprints', key: 'rp3', x: 21, y: 4, art: 'pawprints', ground: true },
+    { id: 'pawprints', key: 'rp4', x: 30, y: 4, art: 'pawprints', ground: true },
+    { id: 'pawprints', key: 'rp5', x: 38, y: 3, art: 'pawprints', vertical: true, ground: true },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// THE WOODS (fallen trees, and a clearing at the top)
+// ---------------------------------------------------------------------------
+function buildWoods() {
+  const g = makeGrid(24, 22, 'Y');
+  carve(g, 11, 15, 12, 21, 'L');
+  carve(g, 5, 15, 12, 16, 'L');
+  carve(g, 5, 9, 6, 16, 'L');
+  carve(g, 5, 9, 17, 10, 'L');
+  carve(g, 16, 7, 17, 10, 'L');
+  carve(g, 13, 19, 19, 20, 'L');
+  carve(g, 5, 1, 18, 8, 'L');
+  [[5, 1], [6, 1], [17, 1], [18, 1], [5, 2], [18, 2], [5, 7], [18, 8], [18, 7]].forEach(([x, y]) => { g[y][x] = 'Y'; });
+  // a tree line along the bottom of the clearing: the only way in is the gap on the right
+  carve(g, 5, 8, 15, 8, 'Y');
+  return g;
+}
+
+const MAP_WOODS = {
+  id: 'woods',
+  name: 'The Woods',
+  grid: buildWoods(),
+  outdoor: true,
+  darkness: 0.83,
+  buildings: [],
+  lights: [{ x: 17 * TS + 8, y: 19 * TS + 8, r: 34, i: 0.5, color: '120,200,255' }],
+  doors: [
+    { x: 11, y: 21, id: 'woods_exit' },
+    { x: 12, y: 21, id: 'woods_exit' },
+  ],
+  objects: [
+    { id: 'log', x: 11, y: 18, w: 2, art: 'log', solid: true, bump: true },
+    { id: 'log', key: 'log2', x: 5, y: 12, w: 2, art: 'log', solid: true, bump: true },
+    { id: 'log', key: 'log3', x: 11, y: 9, h: 2, art: 'logv', solid: true, bump: true },
+    { id: 'mushrooms', x: 16, y: 19, w: 2, h: 2, art: 'mushrooms', ground: true },
+  ],
+};
+
+const MAPS = { house: MAP_HOUSE, street: MAP_STREET, backyard: MAP_BACKYARD, pipe: MAP_PIPE, river: MAP_RIVER, woods: MAP_WOODS };

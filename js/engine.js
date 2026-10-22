@@ -95,6 +95,10 @@ const Game = {
   waiters: [],
   extraLights: [],
   shake: 0,
+  flicker: 0,
+  lightsOut: false,
+  camShift: 0,
+  camOverride: null,
 };
 
 function makeEntity(o) {
@@ -216,6 +220,8 @@ function playerStep(dir) {
   const door = doorAt(nx, ny);
   if (door) { Story.door(door.id); return; }
   if (!passable(nx, ny, p)) {
+    const o = objectAt(nx, ny);
+    if (o && o.bump) { Story.examine(o); return; }
     if (Game.time - (p.lastBump || 0) > 0.35) { Sound.bump(); p.lastBump = Game.time; }
     return;
   }
@@ -313,7 +319,7 @@ function updateCamera() {
   cx = mw <= VIEW_W ? (mw - VIEW_W) / 2 : Math.max(0, Math.min(mw - VIEW_W, cx));
   cy = mh <= VIEW_H ? (mh - VIEW_H) / 2 : Math.max(0, Math.min(mh - VIEW_H, cy));
   Game.cam.x = Math.round(cx);
-  Game.cam.y = Math.round(cy);
+  Game.cam.y = Math.round(cy + Game.camShift);
 }
 
 // ---------------------------------------------------------------------------
@@ -349,19 +355,24 @@ function render() {
     if (it.o) PROPS[it.o.art](ctx, it.o.x * TS + ox, it.o.y * TS + oy, it.o, Game.time);
     else {
       const e = it.e;
-      const ex = Math.round(e.px + ox), ey = Math.round(e.py + oy) - (e.lift || 0);
+      const ex = Math.round(e.px + ox), gy = Math.round(e.py + oy);
+      const ey = gy - Math.round(entityLift(e));
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.fillRect(ex + 4, ey + 14, 8, 2);
-      ctx.fillRect(ex + 3, ey + 15, 10, 1);
+      ctx.fillRect(ex + 4, gy + 14, 8, 2);
+      ctx.fillRect(ex + 3, gy + 15, 10, 1);
       const bob = e.moving && e.progress < 0.5 ? -1 : 0;
+      if (e.alpha !== undefined) ctx.globalAlpha = Math.max(0, e.alpha);
       ctx.drawImage(spriteFrame(e), ex, ey - 2 + bob);
+      ctx.globalAlpha = 1;
     }
   }
 
   renderLighting(ox, oy);
 
+  Story.drawEffects(ctx, ox, oy);
+
   for (const e of Game.entities) {
-    if (e.visible && e.emote) drawEmote(ctx, e.px + ox, e.py + oy - 2, e.emote, Game.time);
+    if (e.visible && e.emote) drawEmote(ctx, e.px + ox, e.py + oy - 2 - entityLift(e), e.emote, Game.time);
   }
 
   if (Game.fade > 0.001) {
@@ -370,18 +381,30 @@ function render() {
   }
 }
 
+// How high an entity is drawn above its tile: hopping over logs, or floating away.
+function entityLift(e) {
+  let lift = e.lift || 0;
+  if (e.hopping && e.moving) lift += Math.sin(e.progress * Math.PI) * 6;
+  return lift;
+}
+
 function currentLights() {
   const m = Game.map;
   const lights = m.lights.slice();
   lights.push(...Story.dynamicLights());
   lights.push(...Game.extraLights);
-  if (Game.mode === 'play' && m.outdoor) {
-    const p = Game.player;
+  for (const e of Game.entities) {
+    if (e.visible && e.glow) lights.push({ x: e.px + 8, y: e.py + 8 - entityLift(e), r: e.glow, i: 0.9 * (e.alpha === undefined ? 1 : Math.max(0, e.alpha)), color: '120,255,160' });
+  }
+  const p = Game.player;
+  if (Game.mode === 'play' && m.outdoor && p.visible && !Game.lightsOut) {
     const cx = p.px + 8, cy = p.py + 8;
     if (Game.flags.flashlight) {
       const [dx, dy] = DIRS[p.dir];
-      lights.push({ x: cx, y: cy, r: 26, i: 0.75 });
-      lights.push({ x: cx + dx * 30, y: cy + dy * 30, r: 40, i: 0.95, beam: true });
+      // a failing battery makes the beam stutter
+      const k = Game.flicker > 0 ? (Math.random() < 0.45 ? 0.15 : 0.8) : 1;
+      lights.push({ x: cx, y: cy, r: 26, i: 0.75 * k });
+      lights.push({ x: cx + dx * 30, y: cy + dy * 30, r: 40, i: 0.95 * k, beam: true });
     } else {
       lights.push({ x: cx, y: cy, r: 30, i: 0.45 });
     }
@@ -412,11 +435,11 @@ function renderLighting(ox, oy) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (const L of lights) {
-    if (!L.warm && !L.beam) continue;
+    if (!L.warm && !L.beam && !L.color) continue;
     const x = L.x + ox, y = L.y + oy;
     const g = ctx.createRadialGradient(x, y, 0, x, y, L.r * 0.8);
-    const col = L.beam ? '255,250,220' : '255,190,90';
-    g.addColorStop(0, `rgba(${col},${L.beam ? 0.08 : 0.13})`);
+    const col = L.color || (L.beam ? '255,250,220' : '255,190,90');
+    g.addColorStop(0, `rgba(${col},${L.beam ? 0.08 : L.color ? 0.22 : 0.13})`);
     g.addColorStop(1, `rgba(${col},0)`);
     ctx.fillStyle = g;
     ctx.fillRect(x - L.r, y - L.r, L.r * 2, L.r * 2);
@@ -434,6 +457,7 @@ function update(dt) {
     Game.fade = Game.fade < Game.fadeTarget ? Math.min(Game.fadeTarget, Game.fade + d) : Math.max(Game.fadeTarget, Game.fade - d);
   }
   if (Game.shake > 0) Game.shake -= dt;
+  if (Game.flicker > 0) Game.flicker -= dt;
   UI.update(dt);
   for (const e of Game.entities) {
     const was = e.moving;
@@ -452,8 +476,13 @@ function update(dt) {
     const m = Game.map;
     Game.titlePan = (Math.sin(Game.time * 0.06) * 0.5 + 0.5) * (m.w * TS - VIEW_W);
   }
+  // Ease the camera up while dialogue is open so the box doesn't cover the scene.
+  if (UI.active) Game.lastTalk = Game.time;
+  let shiftTarget = Game.mode === 'play' && Game.time - (Game.lastTalk || -9) < 0.8 ? 36 : 0;
+  if (Game.camOverride !== null) shiftTarget = Game.camOverride;
+  Game.camShift += (shiftTarget - Game.camShift) * Math.min(1, dt * 4);
   if (Game.map) updateCamera();
-  if (Game.mode === 'play' && Game.map.outdoor && Math.random() < dt * 0.9) Sound.cricket();
+  if (Game.mode === 'play') Story.ambient(dt);
 }
 
 // ---------------------------------------------------------------------------

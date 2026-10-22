@@ -1,6 +1,6 @@
 # Where's Biscuit?
 
-A short, narrative top-down pixel game in the style of the old handheld RPGs.
+A short, narrative top-down pixel game in the style of the old handheld RPGs, with a sci-fi twist.
 
 It's late on a Monday night. Your dog Biscuit goes out back to do his business, and your wife
 Claire asks you to roll the trash cans out to the curb. When you finish, you realize Biscuit
@@ -32,13 +32,17 @@ python3 -m http.server 8000
 3. **Something's wrong:** Biscuit always barks at the cans. You peek over the gate and the yard is empty.
 4. **Inside:** tell Claire. She gives you the flashlight.
 5. **Backyard:** search with the flashlight until you find the hole dug under the fence.
-6. **Maple Lane:** knock on the neighbors' doors. Each one gives you a clue:
-   - **Mrs. Patel**, a kind night owl, heard his collar jingle past heading east.
-   - **Mr. Kowalski** is grumpy, and his tulips got trampled.
-   - **Mia** is a kid who's supposed to be asleep. She saw him run to the park.
-   - **Mr. Abernathy** is hard of hearing, so knock three times. He heard yipping by the drainage pipe.
-7. **The park:** follow the path to the culvert and find out why Biscuit really ran off.
-8. **Home:** bring him back to Claire.
+6. **Maple Lane:** knock on the neighbors' doors. Each one gives a clue, and each one has seen something a little strange:
+   - **Mrs. Patel** heard his collar jingle past. Through her binoculars she also saw a line of dogs marching single file.
+   - **Mr. Kowalski** is grumpy and has trampled tulips. He also has a sad story about Rufus, the dog he lost as a kid.
+   - **Mia** is supposed to be asleep. She swears Biscuit walked by on his back legs with glowing green eyes.
+   - **Mr. Abernathy** is hard of hearing, so knock three times. He heard yipping by the drainage pipe and saw green lights.
+7. **The park:** Biscuit isn't there, but his paw prints lead into the drainage pipe.
+8. **The pipe:** scratching, glowing eyes, echoing howls, and a flashlight that dies at the worst moment. You also find an old blue collar with the name RUFUS on it.
+9. **The riverbed:** a circle of sand melted into glass, and Biscuit's tennis ball. Then the crickets all go silent at once.
+10. **The woods:** climb over fallen trees toward a green glow, and find Biscuit in a circle of dogs. He has something to tell you.
+11. **Home:** Claire says Biscuit came home on his own 5 minutes after you left. Was any of it real?
+12. **Epilogue:** two houses down, someone scratches at Mr. Kowalski's door.
 
 ## Project layout
 
@@ -47,8 +51,8 @@ index.html        page shell, HUD and dialogue overlay
 css/style.css     layout, dialogue box, touch controls
 js/audio.js       WebAudio sound effects + soft looping music
 js/art.js         procedural pixel art: tiles, furniture, houses, props, emote bubbles
-js/sprites.js     character/dog/kitten sprites from text templates
-js/maps.js        tile legend + the house, street and backyard maps
+js/sprites.js     character and dog sprites from text templates
+js/maps.js        tile legend + the house, street, backyard, pipe, riverbed and woods maps
 js/ui.js          typewriter dialogue, choices, objective HUD
 js/engine.js      input, grid movement, collision, camera, lighting, cutscene helpers
 js/story.js       all dialogue, cutscenes, quest flags and examine text

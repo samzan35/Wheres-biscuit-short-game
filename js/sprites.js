@@ -190,55 +190,31 @@ const DOG_RIGHT = [
   '................',
 ];
 
-function dogFrames(base, a, b) {
+function dogFrames(base, a, b, pal) {
   return [
-    canvasFrom(base, DOG_PAL),
-    canvasFrom(base.slice(0, 14).concat(a), DOG_PAL),
-    canvasFrom(base.slice(0, 14).concat(b), DOG_PAL),
+    canvasFrom(base, pal),
+    canvasFrom(base.slice(0, 14).concat(a), pal),
+    canvasFrom(base.slice(0, 14).concat(b), pal),
   ];
 }
 
-function makeDog() {
+function makeDog(overrides = {}) {
+  const pal = Object.assign({}, DOG_PAL, overrides);
   const frontA = ['...OCOCOOCOCO...', '....O.O.........'];
   const frontB = ['...OCOCOOCOCO...', '.........O.O....'];
   const sideA = ['..OCO.O..OCO.O..', '..OO..O..OO..O..'];
   const sideB = ['....OCOO..OCOO..', '....OO....OO....'];
   const right = [
-    canvasFrom(DOG_RIGHT, DOG_PAL),
-    canvasFrom(DOG_RIGHT.slice(0, 13).concat(sideA, ['................']), DOG_PAL),
-    canvasFrom(DOG_RIGHT.slice(0, 13).concat(sideB, ['................']), DOG_PAL),
+    canvasFrom(DOG_RIGHT, pal),
+    canvasFrom(DOG_RIGHT.slice(0, 13).concat(sideA, ['................']), pal),
+    canvasFrom(DOG_RIGHT.slice(0, 13).concat(sideB, ['................']), pal),
   ];
   return {
-    down: dogFrames(DOG_DOWN, frontA, frontB),
-    up: dogFrames(DOG_UP, frontA, frontB),
+    down: dogFrames(DOG_DOWN, frontA, frontB, pal),
+    up: dogFrames(DOG_UP, frontA, frontB, pal),
     right,
     left: right.map(mirrorCanvas),
   };
-}
-
-const KITTEN = [
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '......O...O.....',
-  '.....OKO.OKO....',
-  '.....OKKKKKO....',
-  '.....OKEKEKO....',
-  '......OKWKO.O...',
-  '.....OKKKKKOKO..',
-  '......OOOOOOO...',
-];
-
-function makeKitten() {
-  const f = canvasFrom(KITTEN, { O: '#2a1a10', K: '#e8903a', E: '#1a1010', W: '#f4e6d0' });
-  const frames = [f, f, f];
-  return { down: frames, up: frames, right: frames, left: frames.map(mirrorCanvas) };
 }
 
 let SPR = null;
@@ -251,6 +227,15 @@ function buildSprites() {
     mia: makeCharacter({ hair: '#2a1d18', skin: '#e0b48a', top: '#f29ab8', pants: '#e486a8', shoes: '#f4f4f4', long: true, kid: true }),
     abernathy: makeCharacter({ hair: '#f2f2f2', skin: '#f0c8a8', top: '#5f7d4a', pants: '#7a6a55', shoes: '#3a2a1f' }),
     biscuit: makeDog(),
-    kitten: makeKitten(),
+    // Biscuit with his eyes glowing, for when he isn't pretending
+    biscuitAlien: makeDog({ E: '#7affa0' }),
+    dogs: {
+      rufus: makeDog({ C: '#ece8e0', D: '#1e1e22', W: '#ffffff', R: '#3a5a8a', E: '#7affa0' }),
+      husky: makeDog({ C: '#8e96a0', D: '#4a4f58', W: '#eef0f2', R: '#2a8a5a', E: '#7affa0' }),
+      lab: makeDog({ C: '#3a3030', D: '#241c1c', W: '#4a4040', R: '#d8a020', E: '#7affa0' }),
+      golden: makeDog({ C: '#e0b060', D: '#c08a40', W: '#f5e0b0', R: '#4060c0', E: '#7affa0' }),
+      corgi: makeDog({ C: '#d87a3a', D: '#a85a2a', W: '#fff0e0', R: '#8a3ab0', E: '#7affa0' }),
+      spotty: makeDog({ C: '#f0ece4', D: '#5a3a28', W: '#ffffff', R: '#c03030', E: '#7affa0' }),
+    },
   };
 }
